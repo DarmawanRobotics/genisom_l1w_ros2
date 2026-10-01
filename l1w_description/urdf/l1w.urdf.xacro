@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!-- Genisom L1W. Args: prefix, use_sensors, use_camera_mesh, camera_stream_frames. -->
+<robot name="genisom_l1w" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="prefix" default=""/>
+  <xacro:arg name="use_sensors" default="true"/>
+  <xacro:arg name="use_camera_mesh" default="true"/>
+  <xacro:arg name="camera_stream_frames" default="false"/>
+
+  <xacro:property name="prefix" value="$(arg prefix)"/>
+
+  <xacro:include filename="$(find l1w_description)/urdf/l1w_body.xacro"/>
+  <xacro:include filename="$(find l1w_description)/urdf/sensors.xacro"/>
+
+  <xacro:l1w_body prefix="${prefix}"/>
+
+  <xacro:if value="$(arg use_sensors)">
+
+    <!-- Livox Mid-360: calibrated value from the robot's OTA calibration file. -->
+    <xacro:livox_mid360 parent="${prefix}base_link" name="${prefix}livox">
+      <origin xyz="0.13011 -0.02329 0.17598" rpy="0 0 0"/>
+    </xacro:livox_mid360>
+
+    <!-- RealSense D435i bottom screw: mesh estimate (+-5 mm). TODO: confirm 10 deg pitch. -->
+    <xacro:realsense_d435i parent="${prefix}base_link" name="${prefix}camera"
+                           use_mesh="$(arg use_camera_mesh)"
+                           stream_frames="$(arg camera_stream_frames)">
+      <origin xyz="0.250 0 0.096" rpy="0 0.1745 0"/>
+    </xacro:realsense_d435i>
+
+    <!-- Built-in front camera (optical frame) from OTA calibration.
+         TODO: rotation looks wrong (optical z points to -Y), translation is fine. -->
+    <xacro:front_camera parent="${prefix}base_link" name="${prefix}front_camera">
+      <origin xyz="0.177209 -0.023265 0.030455" rpy="-0.019302 1.325774 -1.558198"/>
+    </xacro:front_camera>
+
+  </xacro:if>
+
+</robot>

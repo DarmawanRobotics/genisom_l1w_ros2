@@ -1,0 +1,27 @@
+/**:
+  ros__parameters:
+    # SDK connection (Firefly RK3588)
+    robot_ip: "192.168.234.1"
+    send_port: 8081
+    recv_port: 8080
+
+    # cmd_vel -> joystick scaling: value that maps to full stick deflection
+    stick_max_vx: 1.0     # m/s
+    stick_max_vy: 0.5     # m/s
+    stick_max_wz: 1.5     # rad/s
+    cmd_timeout: 0.5      # s, stale cmd_vel -> zero joystick
+
+    odom_frame: "odom"
+    base_frame: "base_link"
+
+    control_frequency: 50.0   # Hz
+    fast_state_rate: 50.0     # Hz, imu / odom / joints
+    slow_state_rate: 1.0      # Hz, diagnostics / battery
+
+    # SDK order [LF, RF, LR, RR] x [abad, hip, knee, foot]; must match the URDF joint names
+    joint_names: [
+      "fbl_abad_joint", "fbl_hip_joint", "fbl_knee_joint", "fbl_foot_joint",
+      "far_abad_joint", "far_hip_joint", "far_knee_joint", "far_foot_joint",
+      "rbl_abad_joint", "rbl_hip_joint", "rbl_knee_joint", "rbl_foot_joint",
+      "rar_abad_joint", "rar_hip_joint", "rar_knee_joint", "rar_foot_joint",
+    ]

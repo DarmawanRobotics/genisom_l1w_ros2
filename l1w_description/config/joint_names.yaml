@@ -1,0 +1,18 @@
+# L1W joint order, same as the SDK: legs [LF, RF, LR, RR] x [abad, hip, knee, foot]
+joint_names:
+  - fbl_abad_joint
+  - fbl_hip_joint
+  - fbl_knee_joint
+  - fbl_foot_joint
+  - far_abad_joint
+  - far_hip_joint
+  - far_knee_joint
+  - far_foot_joint
+  - rbl_abad_joint
+  - rbl_hip_joint
+  - rbl_knee_joint
+  - rbl_foot_joint
+  - rar_abad_joint
+  - rar_hip_joint
+  - rar_knee_joint
+  - rar_foot_joint

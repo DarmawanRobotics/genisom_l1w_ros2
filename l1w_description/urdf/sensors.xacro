@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<!-- Sensor macros; poses are passed in as *origin from l1w.urdf.xacro. -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="M_PI_2" value="1.5707963267948966"/>
+
+  <material name="l1w_sensor_black"><color rgba="0.15 0.15 0.15 1"/></material>
+  <material name="l1w_sensor_alu"><color rgba="0.5 0.5 0.55 1"/></material>
+
+  <!-- Livox Mid-360: ${name}_frame is the point cloud origin, IMU offset from the Livox manual. -->
+  <xacro:macro name="livox_mid360" params="parent name:=livox *origin">
+    <joint name="${name}_joint" type="fixed">
+      <xacro:insert_block name="origin"/>
+      <parent link="${parent}"/>
+      <child link="${name}_frame"/>
+    </joint>
+    <link name="${name}_frame">
+      <!-- approximate body (65x65x60 mm), visual only -->
+      <visual>
+        <origin xyz="0 0 -0.02" rpy="0 0 0"/>
+        <geometry><cylinder radius="0.0325" length="0.06"/></geometry>
+        <material name="l1w_sensor_black"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 -0.02" rpy="0 0 0"/>
+        <geometry><cylinder radius="0.0325" length="0.06"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="0.265"/>
+        <origin xyz="0 0 -0.02"/>
+        <inertia ixx="0.00015" ixy="0" ixz="0" iyy="0.00015" iyz="0" izz="0.00014"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_imu_joint" type="fixed">
+      <origin xyz="0.011 0.02329 -0.04412" rpy="0 0 0"/>
+      <parent link="${name}_frame"/>
+      <child link="${name}_imu_frame"/>
+    </joint>
+    <link name="${name}_imu_frame"/>
+  </xacro:macro>
+
+  <!-- RealSense D435i up to ${name}_link; origin is the bottom screw.
+       Stream/optical frames come from the driver (publish_tf), set stream_frames:=true only without it. -->
+  <xacro:macro name="realsense_d435i" params="parent name:=camera use_mesh:=true stream_frames:=false *origin">
+    <joint name="${name}_joint" type="fixed">
+      <xacro:insert_block name="origin"/>
+      <parent link="${parent}"/>
+      <child link="${name}_bottom_screw_frame"/>
+    </joint>
+    <link name="${name}_bottom_screw_frame"/>
+
+    <joint name="${name}_link_joint" type="fixed">
+      <origin xyz="0.0106 0.0175 0.0125" rpy="0 0 0"/>
+      <parent link="${name}_bottom_screw_frame"/>
+      <child link="${name}_link"/>
+    </joint>
+    <link name="${name}_link">
+      <visual>
+        <xacro:if value="${use_mesh}">
+          <origin xyz="0.0043 -0.0175 0" rpy="${M_PI_2} 0 ${M_PI_2}"/>
+          <geometry><mesh filename="package://realsense2_description/meshes/d435.dae"/></geometry>
+        </xacro:if>
+        <xacro:unless value="${use_mesh}">
+          <origin xyz="-0.0085 -0.0175 0" rpy="0 0 0"/>
+          <geometry><box size="0.02505 0.090 0.025"/></geometry>
+          <material name="l1w_sensor_alu"/>
+        </xacro:unless>
+      </visual>
+      <collision>
+        <origin xyz="-0.0085 -0.0175 0" rpy="0 0 0"/>
+        <geometry><box size="0.02505 0.090 0.025"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="0.072"/>
+        <origin xyz="0 0 0"/>
+        <inertia ixx="0.003881243" ixy="0" ixz="0" iyy="0.000498940" iyz="0" izz="0.003879257"/>
+      </inertial>
+    </link>
+
+    <xacro:if value="${stream_frames}">
+    <!-- One stream: ${name}_<stream>_frame plus its optical frame (nominal extrinsics). -->
+    <xacro:macro name="_rs_stream" params="stream xyz">
+      <joint name="${name}_${stream}_joint" type="fixed">
+        <origin xyz="${xyz}" rpy="0 0 0"/>
+        <parent link="${name}_link"/>
+        <child link="${name}_${stream}_frame"/>
+      </joint>
+      <link name="${name}_${stream}_frame"/>
+      <joint name="${name}_${stream}_optical_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="${-M_PI_2} 0 ${-M_PI_2}"/>
+        <parent link="${name}_${stream}_frame"/>
+        <child link="${name}_${stream}_optical_frame"/>
+      </joint>
+      <link name="${name}_${stream}_optical_frame"/>
+    </xacro:macro>
+
+    <xacro:_rs_stream stream="depth"  xyz="0 0 0"/>
+    <xacro:_rs_stream stream="infra1" xyz="0 0 0"/>
+    <xacro:_rs_stream stream="infra2" xyz="0 -0.050 0"/>
+    <xacro:_rs_stream stream="color"  xyz="0 0.015 0"/>
+    <xacro:_rs_stream stream="accel"  xyz="-0.01174 -0.00552 0.0051"/>
+    <xacro:_rs_stream stream="gyro"   xyz="-0.01174 -0.00552 0.0051"/>
+    </xacro:if>
+  </xacro:macro>
+
+  <!-- Built-in front camera: optical frame only (Z forward, X right, Y down). -->
+  <xacro:macro name="front_camera" params="parent name:=front_camera *origin">
+    <joint name="${name}_optical_joint" type="fixed">
+      <xacro:insert_block name="origin"/>
+      <parent link="${parent}"/>
+      <child link="${name}_optical_frame"/>
+    </joint>
+    <link name="${name}_optical_frame"/>
+  </xacro:macro>
+
+</robot>

@@ -1,0 +1,431 @@
+<?xml version="1.0"?>
+<!-- Genisom L1W body: base, 4 wheel-legs and sensor mast (from the SolidWorks export xg_wheel_su). -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <material name="l1w_grey"><color rgba="0.75294 0.75294 0.75294 1"/></material>
+  <material name="l1w_dark"><color rgba="0.49804 0.49804 0.49804 1"/></material>
+
+  <!-- Leg prefixes: fbl=front-left, far=front-right, rar=rear-right, rbl=rear-left. -->
+  <xacro:macro name="l1w_body" params="prefix:=''">
+    <link name="${prefix}base_link">
+      <inertial>
+        <origin xyz="0.0054244583 -0.00036330247 0.0060908623" rpy="0 0 0"/>
+        <mass value="6.2672"/>
+        <inertia ixx="0.027359128" ixy="-0.000016710628" ixz="0.0008748801" iyy="0.084984679" iyz="-0.000013572831" izz="0.099223551"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/BASE_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/BASE_LINK.STL"/></geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}fbl_abad_link">
+      <inertial>
+        <origin xyz="-0.027074453 -0.015458828 0.0000094167931" rpy="0 0 0"/>
+        <mass value="0.45409769"/>
+        <inertia ixx="0.000251027" ixy="0.000153060" ixz="0.0000000321747" iyy="0.0004874808" iyz="-0.0000000208886" izz="0.00054102144"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/FBL_ABAD_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+    </link>
+
+    <joint name="${prefix}fbl_abad_joint" type="revolute">
+      <origin xyz="0.17449 0.062 0" rpy="0 0 0"/>
+      <parent link="${prefix}base_link"/>
+      <child link="${prefix}fbl_abad_link"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="-0.4887" upper="0.4887" effort="30" velocity="28"/>
+    </joint>
+
+    <link name="${prefix}fbl_hip_link">
+      <inertial>
+        <origin xyz="-0.00334388 -0.042909 -0.0216077" rpy="0 0 0"/>
+        <mass value="1.5541843"/>
+        <inertia ixx="0.0069465757" ixy="0.00024600926" ixz="-0.00044260461" iyy="0.0047644743" iyz="0.0014434247" izz="0.0032561192"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/FBL_HIP_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="-0.01 0 -0.06" rpy="0 0.2 0"/>
+        <geometry><box size="0.04 0.02 0.18"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}fbl_hip_joint" type="revolute">
+      <origin xyz="0 0.097412 0" rpy="0 0 0"/>
+      <parent link="${prefix}fbl_abad_link"/>
+      <child link="${prefix}fbl_hip_link"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-1.1519" upper="2.967" effort="30" velocity="28"/>
+    </joint>
+
+    <link name="${prefix}fbl_knee_link">
+      <inertial>
+        <origin xyz="0.00581457 0.02132183 -0.1663067" rpy="0 0 0"/>
+        <mass value="0.85705614"/>
+        <inertia ixx="0.03016636" ixy="-0.00000739" ixz="0.00057521" iyy="0.02983215" iyz="0.00399466" izz="0.00127827"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/FBL_KNEE_LINK.STL"/></geometry>
+        <material name="l1w_dark"/>
+      </visual>
+      <collision>
+        <origin xyz="0.021 0 -0.06" rpy="0 -0.18 0"/>
+        <geometry><box size="0.02 0.02 0.11"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}fbl_knee_joint" type="revolute">
+      <origin xyz="0 0 -0.2" rpy="0 0 0"/>
+      <parent link="${prefix}fbl_hip_link"/>
+      <child link="${prefix}fbl_knee_link"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-2.723" upper="-0.602" effort="30" velocity="28"/>
+    </joint>
+
+    <link name="${prefix}fbl_foot_link">
+      <inertial>
+        <origin xyz="-0.00004701 0.04379637 0" rpy="0 0 0"/>
+        <mass value="0.72612231"/>
+        <inertia ixx="0.00256321" ixy="0.00000148" ixz="0" iyy="0.00212411" iyz="0" izz="0.00256311"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/FBL_FOOT_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/FBL_FOOT_LINK.STL"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}fbl_foot_joint" type="continuous">
+      <origin xyz="0 0 -0.218999" rpy="0 0 0"/>
+      <parent link="${prefix}fbl_knee_link"/>
+      <child link="${prefix}fbl_foot_link"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="9" velocity="160"/>
+    </joint>
+
+    <link name="${prefix}far_abad_link">
+      <inertial>
+        <origin xyz="-0.027074453 0.015458828 -0.0000094167931" rpy="0 0 0"/>
+        <mass value="0.45409769"/>
+        <inertia ixx="0.000251027" ixy="-0.000153060" ixz="-0.0000000321747" iyy="0.0004874808" iyz="-0.0000000208886" izz="0.00054102144"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/FAR_ABAD_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+    </link>
+
+    <joint name="${prefix}far_abad_joint" type="revolute">
+      <origin xyz="0.17449 -0.062 0" rpy="0 0 0"/>
+      <parent link="${prefix}base_link"/>
+      <child link="${prefix}far_abad_link"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="-0.4887" upper="0.4887" effort="30" velocity="28"/>
+    </joint>
+
+    <link name="${prefix}far_hip_link">
+      <inertial>
+        <origin xyz="-0.0034244521 0.0427302652 -0.022325654" rpy="0 0 0"/>
+        <mass value="1.553857"/>
+        <inertia ixx="0.0071458222" ixy="-0.00025057726" ixz="-0.000457345" iyy="0.0049559736" iyz="-0.0014871635" izz="0.0032698207"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/FAR_HIP_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="-0.01 0 -0.06" rpy="0 0.2 0"/>
+        <geometry><box size="0.04 0.02 0.18"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}far_hip_joint" type="revolute">
+      <origin xyz="0 -0.097399 0" rpy="0 0 0"/>
+      <parent link="${prefix}far_abad_link"/>
+      <child link="${prefix}far_hip_link"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-1.1519" upper="2.967" effort="30" velocity="28"/>
+    </joint>
+
+    <link name="${prefix}far_knee_link">
+      <inertial>
+        <origin xyz="0.00540539 -0.02125709 -0.16629407" rpy="0 0 0"/>
+        <mass value="0.85904206"/>
+        <inertia ixx="0.03020795" ixy="-0.00000416" ixz="0.00049713" iyy="0.0298777" iyz="-0.00398644" izz="0.00128245"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/FAR_KNEE_LINK.STL"/></geometry>
+        <material name="l1w_dark"/>
+      </visual>
+      <collision>
+        <origin xyz="0.021 0 -0.06" rpy="0 -0.18 0"/>
+        <geometry><box size="0.02 0.02 0.11"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}far_knee_joint" type="revolute">
+      <origin xyz="0 0 -0.2" rpy="0 0 0"/>
+      <parent link="${prefix}far_hip_link"/>
+      <child link="${prefix}far_knee_link"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-2.723" upper="-0.602" effort="30" velocity="28"/>
+    </joint>
+
+    <link name="${prefix}far_foot_link">
+      <inertial>
+        <origin xyz="-0.00004416 -0.04379637 0" rpy="0 0 0"/>
+        <mass value="0.72612231"/>
+        <inertia ixx="0.00256321" ixy="-0.00000144" ixz="0" iyy="0.00212411" iyz="0" izz="0.00256311"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/FAR_FOOT_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/FAR_FOOT_LINK.STL"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}far_foot_joint" type="continuous">
+      <origin xyz="0 0 -0.218999" rpy="0 0 0"/>
+      <parent link="${prefix}far_knee_link"/>
+      <child link="${prefix}far_foot_link"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="9" velocity="160"/>
+    </joint>
+
+    <link name="${prefix}rar_abad_link">
+      <inertial>
+        <origin xyz="0.027074453 0.015458828 0.0000094167931" rpy="0 0 0"/>
+        <mass value="0.45409769"/>
+        <inertia ixx="0.000251027" ixy="0.000153060" ixz="-0.0000000321747" iyy="0.0004874808" iyz="0.0000000208886" izz="0.00054102144"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/RAR_ABAD_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+    </link>
+
+    <joint name="${prefix}rar_abad_joint" type="revolute">
+      <origin xyz="-0.17449 -0.062 0" rpy="0 0 0"/>
+      <parent link="${prefix}base_link"/>
+      <child link="${prefix}rar_abad_link"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="-0.4887" upper="0.4887" effort="30" velocity="28"/>
+    </joint>
+
+    <link name="${prefix}rar_hip_link">
+      <inertial>
+        <origin xyz="-0.0034244521 0.0427302652 -0.022325654" rpy="0 0 0"/>
+        <mass value="1.553857"/>
+        <inertia ixx="0.0071458222" ixy="-0.00025057726" ixz="-0.000457345" iyy="0.0049559736" iyz="-0.0014871635" izz="0.0032698207"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/RAR_HIP_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="-0.01 0 -0.06" rpy="0 0.2 0"/>
+        <geometry><box size="0.04 0.02 0.18"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}rar_hip_joint" type="revolute">
+      <origin xyz="0 -0.0974 0" rpy="0 0 0"/>
+      <parent link="${prefix}rar_abad_link"/>
+      <child link="${prefix}rar_hip_link"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-1.1519" upper="2.967" effort="30" velocity="28"/>
+    </joint>
+
+    <link name="${prefix}rar_knee_link">
+      <inertial>
+        <origin xyz="0.00540539 -0.02125709 -0.16629407" rpy="0 0 0"/>
+        <mass value="0.85904206"/>
+        <inertia ixx="0.03020795" ixy="-0.00000416" ixz="0.00049713" iyy="0.0298777" iyz="-0.00398644" izz="0.00128245"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/RAR_KNEE_LINK.STL"/></geometry>
+        <material name="l1w_dark"/>
+      </visual>
+      <collision>
+        <origin xyz="0.021 0 -0.06" rpy="0 -0.18 0"/>
+        <geometry><box size="0.02 0.02 0.11"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}rar_knee_joint" type="revolute">
+      <origin xyz="0 0 -0.2" rpy="0 0 0"/>
+      <parent link="${prefix}rar_hip_link"/>
+      <child link="${prefix}rar_knee_link"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-2.723" upper="-0.602" effort="30" velocity="28"/>
+    </joint>
+
+    <link name="${prefix}rar_foot_link">
+      <inertial>
+        <origin xyz="-0.00004416 -0.04379637 0" rpy="0 0 0"/>
+        <mass value="0.72612231"/>
+        <inertia ixx="0.00256321" ixy="-0.00000144" ixz="0" iyy="0.00212411" iyz="0" izz="00.00256311"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/RAR_FOOT_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/RAR_FOOT_LINK.STL"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}rar_foot_joint" type="continuous">
+      <origin xyz="0 0 -0.218999" rpy="0 0 0"/>
+      <parent link="${prefix}rar_knee_link"/>
+      <child link="${prefix}rar_foot_link"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="9" velocity="160"/>
+    </joint>
+
+    <link name="${prefix}rbl_abad_link">
+      <inertial>
+        <origin xyz="0.027074453 -0.015458828 -0.0000094167931" rpy="0 0 0"/>
+        <mass value="0.45409769"/>
+        <inertia ixx="0.000251027" ixy="-0.000153060" ixz="0.0000000321747" iyy="0.0004874808" iyz="0.0000000208886" izz="0.00054102144"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/RBL_ABAD_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+    </link>
+
+    <joint name="${prefix}rbl_abad_joint" type="revolute">
+      <origin xyz="-0.17449 0.062 0" rpy="0 0 0"/>
+      <parent link="${prefix}base_link"/>
+      <child link="${prefix}rbl_abad_link"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="-0.4887" upper="0.4887" effort="30" velocity="28"/>
+    </joint>
+
+    <link name="${prefix}rbl_hip_link">
+      <inertial>
+        <origin xyz="-0.00334388 -0.042909 -0.0216077" rpy="0 0 0"/>
+        <mass value="1.5541843"/>
+        <inertia ixx="0.0069465757" ixy="0.00024600926" ixz="-0.00044260461" iyy="0.0047644743" iyz="0.0014434247" izz="0.0032561192"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/RBL_HIP_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="-0.01 0 -0.06" rpy="0 0.2 0"/>
+        <geometry><box size="0.04 0.02 0.18"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}rbl_hip_joint" type="revolute">
+      <origin xyz="0 0.097412 0" rpy="0 0 0"/>
+      <parent link="${prefix}rbl_abad_link"/>
+      <child link="${prefix}rbl_hip_link"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-1.1519" upper="2.967" effort="30" velocity="28"/>
+    </joint>
+
+    <link name="${prefix}rbl_knee_link">
+      <inertial>
+        <origin xyz="0.00581457 0.02132183 -0.1663067" rpy="0 0 0"/>
+        <mass value="0.85705614"/>
+        <inertia ixx="0.03016636" ixy="-0.00000739" ixz="0.00057521" iyy="0.02983215" iyz="0.00399466" izz="0.00127827"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/RBL_KNEE_LINK.STL"/></geometry>
+        <material name="l1w_dark"/>
+      </visual>
+      <collision>
+        <origin xyz="0.021 0 -0.06" rpy="0 -0.18 0"/>
+        <geometry><box size="0.02 0.02 0.11"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}rbl_knee_joint" type="revolute">
+      <origin xyz="0 0 -0.2" rpy="0 0 0"/>
+      <parent link="${prefix}rbl_hip_link"/>
+      <child link="${prefix}rbl_knee_link"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-2.723" upper="-0.602" effort="30" velocity="28"/>
+    </joint>
+
+    <link name="${prefix}rbl_foot_link">
+      <inertial>
+        <origin xyz="-0.00004701 0.04379637 0" rpy="0 0 0"/>
+        <mass value="0.72612231"/>
+        <inertia ixx="0.00256321" ixy="0.00000148" ixz="0" iyy="0.00212411" iyz="0" izz="0.00256311"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/RBL_FOOT_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/RBL_FOOT_LINK.STL"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}rbl_foot_joint" type="continuous">
+      <origin xyz="0 0 -0.218999" rpy="0 0 0"/>
+      <parent link="${prefix}rbl_knee_link"/>
+      <child link="${prefix}rbl_foot_link"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="9" velocity="160"/>
+    </joint>
+
+    <link name="${prefix}ssz_uper_link">
+      <inertial>
+        <origin xyz="0.01263504 0.00032879 0.09809428" rpy="0 0 0"/>
+        <mass value="2.1"/>
+        <inertia ixx="0.00446414" ixy="0.00010078" ixz="-0.00386098" iyy="0.05793496" iyz="0.00001361" izz="0.05998999"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="package://l1w_description/meshes/SSZ_UPER_LINK.STL"/></geometry>
+        <material name="l1w_grey"/>
+      </visual>
+    </link>
+
+    <joint name="${prefix}ssz_uper_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="${prefix}base_link"/>
+      <child link="${prefix}ssz_uper_link"/>
+    </joint>
+  </xacro:macro>
+
+</robot>

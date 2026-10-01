@@ -1,0 +1,15 @@
+# Flat key: value, read by realsense2_camera rs_launch.py (config_file); not a ros__parameters file.
+# URDF stops at camera_link; the driver publishes stream/optical frames with factory extrinsics.
+camera_name: camera
+camera_namespace: camera
+enable_color: true
+enable_depth: false
+enable_infra1: false
+enable_infra2: false
+enable_gyro: false
+enable_accel: false
+rgb_camera.color_profile: 640,480,30
+pointcloud.enable: false
+initial_reset: true
+publish_tf: true
+tf_publish_rate: 0.0
