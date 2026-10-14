@@ -73,6 +73,8 @@ public:
     stick_vy_ = declare_parameter<double>("stick_max_vy", 0.5);
     stick_wz_ = declare_parameter<double>("stick_max_wz", 1.5);
     cmd_timeout_ = declare_parameter<double>("cmd_timeout", 0.5);
+    auto_control_right_ = declare_parameter<bool>("auto_control_right", true);
+    control_retry_s_ = declare_parameter<double>("control_right_retry", 1.0);
 
     odom_frame_ = declare_parameter<std::string>("odom_frame", "odom");
     base_frame_ = declare_parameter<std::string>("base_frame", "base_link");
@@ -160,8 +162,7 @@ private:
       command_srvs_.push_back(create_service<Trigger>(
         name,
         [this, name](const std::shared_ptr<Trigger::Request>, std::shared_ptr<Trigger::Response> res) {
-          res->success = send_command(name);
-          res->message = (res->success ? "sent: " : "rejected: ") + name;
+          res->success = send_command(name, res->message);
         },
         rmw_qos_profile_services_default, is_estop ? estop_group_ : main_group_));
     }
@@ -189,31 +190,98 @@ private:
   }
 
   /// Send a named command to the robot; returns false if unknown or disconnected.
-  bool send_command(const std::string & name)
+  bool send_command(const std::string & name, std::string & res_msg)
   {
     const auto & map = command_map();
     const auto it = map.find(name);
     if (it == map.end()) {
       RCLCPP_WARN(get_logger(), "unknown command '%s'", name.c_str());
+      res_msg = "rejected: unknown command";
       return false;
     }
     if (!exec_->IsConnected()) {
       RCLCPP_WARN(get_logger(), "robot not connected, dropping '%s'", name.c_str());
+      res_msg = "rejected: not connected";
       return false;
     }
-    if (name == "emergency_stop") {
+    const bool is_estop = (name == "emergency_stop");
+    const bool is_right = (name.size() > 14 && name.compare(name.size() - 14, 14, "_control_right") == 0);
+    if (is_estop) {
       std::lock_guard<std::mutex> lk(cmd_mtx_);
       have_cmd_ = false;
     }
+    if (!is_estop && !is_right && !has_sdk_control()) {
+      res_msg = std::string("rejected: function_mode=") + function_mode_name(exec_->GetFunctionMode()) +
+        ", call sdk_control_right first";
+      RCLCPP_WARN(get_logger(), "%s (%s)", res_msg.c_str(), name.c_str());
+      return false;
+    }
     exec_->SetCmd(it->second);
+    if (name == "sdk_control_right") {
+      control_requested_ = true;
+      last_right_req_ = Clock::now();
+    }
     RCLCPP_INFO(get_logger(), "cmd -> %s", name.c_str());
+    res_msg = "sent: " + name;
     return true;
+  }
+
+  /// True when the robot reports SDK as the active function mode.
+  bool has_sdk_control() const
+  {
+    return exec_->GetFunctionMode() == zsibot::FunctionMode::FM_SDK;
+  }
+
+  /// Request SDK control once per connection; retry until the robot confirms, then stop so the
+  /// handheld remote can still take over.
+  void ensure_control_right()
+  {
+    const bool connected = exec_->IsConnected();
+    if (!connected) {
+      if (was_connected_) {
+        RCLCPP_WARN(get_logger(), "robot disconnected");
+      }
+      was_connected_ = false;
+      control_requested_ = false;
+      control_confirmed_ = false;
+      return;
+    }
+    if (!was_connected_) {
+      RCLCPP_INFO(get_logger(), "robot connected, function_mode=%s",
+        function_mode_name(exec_->GetFunctionMode()));
+      was_connected_ = true;
+    }
+    if (has_sdk_control()) {
+      if (!control_confirmed_) {
+        RCLCPP_INFO(get_logger(), "SDK control right confirmed");
+      }
+      control_confirmed_ = true;
+      return;
+    }
+    if (control_confirmed_) {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000,
+        "control taken by %s, call sdk_control_right to take it back",
+        function_mode_name(exec_->GetFunctionMode()));
+      return;
+    }
+    if (!auto_control_right_) {
+      return;
+    }
+    const double since = std::chrono::duration<double>(Clock::now() - last_right_req_).count();
+    if (!control_requested_ || since > control_retry_s_) {
+      exec_->SetCmd(zsibot::CmdCode::CMD_SDK_CONTROL_RIGHT);
+      control_requested_ = true;
+      last_right_req_ = Clock::now();
+      RCLCPP_INFO(get_logger(), "requesting SDK control right (function_mode=%s)",
+        function_mode_name(exec_->GetFunctionMode()));
+    }
   }
 
   /// Forward the latest cmd_vel as joystick input; send zero when it is stale.
   void control_loop()
   {
-    if (!exec_->IsConnected()) {
+    ensure_control_right();
+    if (!exec_->IsConnected() || !has_sdk_control()) {
       return;
     }
     std::array<float, 4> joy{0.F, 0.F, 0.F, 0.F};  // [forward, yaw, lateral, head]
@@ -427,6 +495,12 @@ private:
   double stick_vy_{0.5};
   double stick_wz_{1.5};
   double cmd_timeout_{0.5};
+  bool auto_control_right_{true};
+  double control_retry_s_{1.0};
+  bool was_connected_{false};
+  bool control_requested_{false};
+  bool control_confirmed_{false};
+  Clock::time_point last_right_req_{};
   std::vector<std::string> joint_names_;
 
   std::mutex cmd_mtx_;

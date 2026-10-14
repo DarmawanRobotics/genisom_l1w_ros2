@@ -76,6 +76,12 @@ Topics and services are relative to the namespace (default `l1w`).
 | `<command>` (srv) | `std_srvs/Trigger` | `stand_up`, `sit_down`, `move_mode`, `balance_stand_mode`, `lock_mode`, `emergency_stop`, `slow_speed`, `normal_speed`, `fast_speed`, `crawl_forward`, `climbing_high_platform`, `hand_stand`, `unload_squat`, `enter_lab_mode`, `exit_lab_mode`, `enter_entertainment_mode`, `exit_entertainment_mode`, `*_control_right` |
 | `set_wifi` (srv) | `l1w_driver/srv/SetWifi` | |
 
+The driver runs as `ROLE_SDK`. The robot streams state to any client but ignores commands and
+`cmd_vel` until it reports `function_mode=sdk` (see `diagnostics`). With `auto_control_right`
+the driver sends `CMD_SDK_CONTROL_RIGHT` on connect and retries until confirmed, then stops so
+the handheld remote can still take over. To take control back, call `sdk_control_right`.
+Commands other than `emergency_stop` and `*_control_right` are rejected while SDK control is not held.
+
 The SDK accepts only one active control connection, so never run two nodes that create a
 `ZsibotExecutor`.
 
