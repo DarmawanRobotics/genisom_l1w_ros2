@@ -105,7 +105,8 @@ public:
     fast_timer_ = make_timer(fast_rate, [this] {publish_fast();});
     slow_timer_ = make_timer(slow_rate, [this] {publish_slow();});
 
-    RCLCPP_INFO(get_logger(), "l1w_driver -> %s:%d (recv :%d)", ip.c_str(), send_port, recv_port);
+    RCLCPP_INFO(get_logger(), "l1w_driver -> %s:%d (recv :%d)", ip.c_str(),
+      static_cast<int>(send_port), static_cast<int>(recv_port));
   }
 
   /// Zero the joystick before shutdown so the robot stops.
