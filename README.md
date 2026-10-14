@@ -85,6 +85,61 @@ Commands other than `emergency_stop` and `*_control_right` are rejected while SD
 The SDK accepts only one active control connection, so never run two nodes that create a
 `ZsibotExecutor`.
 
+## Pashupati
+
+Clone into `src/xtras/robots/` of [Pashupati](https://github.com/DarmawanRobotics/Pashupati),
+then set in `/etc/pashupati/pashupati.env`:
+
+```bash
+ROBOT_BRINGUP=l1w_bringup
+ROBOT_NS=l1w
+ROBOT_IP=192.168.234.1
+ROBOT_SETUP=/home/robot/dev/Pashupati/src/xtras/robots/genisom_l1w_ros2/script/setup.sh
+# the vendor autostart runs its own Livox driver and motion stack; quoted, it has spaces
+ROBOT_PRESTART="/usr/local/bin/robot-launch stop driver-livox forward"
+```
+
+and the robot part of `/etc/pashupati/site.yaml`:
+
+```yaml
+control_mux_node:
+  ros__parameters:
+    field.front: 0.40
+    field.rear: 0.40
+    field.half_width: 0.28
+    field.max_decel: 0.6          # measure on the site's floor
+    field.reaction_time: 0.25
+    max_vx: 1.0
+    max_vy: 0.5
+    max_wz: 1.5
+
+path_follower_node:
+  ros__parameters:
+    holonomic: true
+
+lidar_sector_node:
+  ros__parameters:
+    self_filter_x_min: -0.40
+    self_filter_x_max: 0.40
+    self_filter_y_min: -0.28
+    self_filter_y_max: 0.28
+
+teleop_udp_node:
+  ros__parameters:
+    token: "<secret>"             # the same in the handheld app
+    # the handheld's action menu, in this order
+    robot_commands: [stand_up, sit_down, balance_stand_mode, move_mode, lock_mode, slow_speed,
+                     normal_speed, fast_speed, sdk_control_right, emergency_stop]
+```
+
+- `script/setup.sh install robot` (Pashupati) runs this repo's `script/setup.sh` to install the SDK.
+- The vendor stack talks `rmw_zenoh` on its own domain; Pashupati stays on `rmw_fastrtps_cpp`,
+  domain 0. In a shell, `source ~/dev/Pashupati/script/env.sh` before any `ros2` command.
+- The vendor remote can take control back at any time; `sdk_control_right` (handheld action menu)
+  hands it to the SDK again.
+- The RealSense runs through librealsense's libusb backend: the kernel `uvcvideo` module must not
+  bind it as well (Pashupati's `script/setup.sh install realsense` blacklists it on the Jetson).
+
 ## License
 
 Apache-2.0
