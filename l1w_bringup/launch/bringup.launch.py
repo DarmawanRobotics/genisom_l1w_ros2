@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -56,10 +56,13 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration('use_lidar')),
     )
 
-    camera = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [FindPackageShare('realsense2_camera'), 'launch', 'rs_launch.py'])),
-        launch_arguments={'config_file': LaunchConfiguration('camera_config')}.items(),
+    # rs_launch.py warns about every launch argument it does not know (ours and any parent
+    # launch's), so it only gets config_file.
+    camera = GroupAction(
+        [IncludeLaunchDescription(PythonLaunchDescriptionSource(PathJoinSubstitution(
+            [FindPackageShare('realsense2_camera'), 'launch', 'rs_launch.py'])))],
+        forwarding=False,
+        launch_configurations={'config_file': LaunchConfiguration('camera_config')},
         condition=IfCondition(LaunchConfiguration('use_camera')),
     )
 
