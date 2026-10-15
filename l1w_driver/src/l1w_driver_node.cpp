@@ -146,6 +146,11 @@ private:
     lateral_axis_ = static_cast<std::size_t>(lateral);
     yaw_sign_ = declare_parameter<bool>("stick_invert_yaw", false) ? -1.0F : 1.0F;
     lateral_sign_ = declare_parameter<bool>("stick_invert_lateral", false) ? -1.0F : 1.0F;
+    // in the journal, so a robot running an older driver (no such line) is easy to spot
+    RCLCPP_INFO(get_logger(),
+      "cmd_vel -> joystick: forward on channel 0, yaw on %zu%s, lateral on %zu%s",
+      yaw_axis_, yaw_sign_ < 0.0F ? " (inverted)" : "",
+      lateral_axis_, lateral_sign_ < 0.0F ? " (inverted)" : "");
   }
 
   /// Create all state publishers.
