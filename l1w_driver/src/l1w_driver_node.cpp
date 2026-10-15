@@ -138,7 +138,7 @@ private:
     if (!valid) {
       RCLCPP_WARN(get_logger(),
         "stick_yaw_axis / stick_lateral_axis must be 1 and 2 (got %d, %d), using 2 and 1",
-        yaw, lateral);
+        static_cast<int>(yaw), static_cast<int>(lateral));
       yaw = 2;
       lateral = 1;
     }
