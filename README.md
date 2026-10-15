@@ -66,7 +66,7 @@ Topics and services are relative to the namespace (default `l1w`).
 
 | Name | Type | Notes |
 |---|---|---|
-| `cmd_vel` (sub) | `geometry_msgs/Twist` | Scaled to joystick input, zeroed after `cmd_timeout` |
+| `cmd_vel` (sub) | `geometry_msgs/Twist` | Scaled to joystick input, zeroed after `cmd_timeout`; yaw and lateral channels and directions in `stick_*_axis` / `stick_invert_*` |
 | `imu`, `imu/rpy` | `sensor_msgs/Imu`, `geometry_msgs/Vector3Stamped` | 50 Hz |
 | `odom`, `odom/world_velocity` | `nav_msgs/Odometry`, `geometry_msgs/Vector3Stamped` | SDK odometry, no TF |
 | `joint_states` | `sensor_msgs/JointState` | 16 joints, names match the URDF |

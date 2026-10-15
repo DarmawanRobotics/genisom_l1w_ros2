@@ -9,6 +9,12 @@
     stick_max_vx: 1.0     # m/s
     stick_max_vy: 0.5     # m/s
     stick_max_wz: 1.5     # rad/s
+    # Joystick channel of each motion. The SDK documents [forward, rotation, left/right, head],
+    # but the L1W turns on 2 and strafes on 1. Positive = turn / move left (ROS convention).
+    stick_yaw_axis: 2
+    stick_lateral_axis: 1
+    stick_invert_yaw: false      # true if the robot turns the wrong way
+    stick_invert_lateral: false  # true if it strafes the wrong way
     cmd_timeout: 0.5      # s, stale cmd_vel -> zero joystick
 
     # ROLE_SDK commands are ignored until the robot reports function_mode=sdk

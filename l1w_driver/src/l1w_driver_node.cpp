@@ -72,6 +72,7 @@ public:
     stick_vx_ = declare_parameter<double>("stick_max_vx", 1.0);
     stick_vy_ = declare_parameter<double>("stick_max_vy", 0.5);
     stick_wz_ = declare_parameter<double>("stick_max_wz", 1.5);
+    setup_stick_axes();
     cmd_timeout_ = declare_parameter<double>("cmd_timeout", 0.5);
     auto_control_right_ = declare_parameter<bool>("auto_control_right", true);
     control_retry_s_ = declare_parameter<double>("control_right_retry", 1.0);
@@ -123,6 +124,28 @@ private:
   rclcpp::TimerBase::SharedPtr make_timer(double rate_hz, std::function<void()> cb)
   {
     return create_wall_timer(std::chrono::duration<double>(1.0 / rate_hz), cb, main_group_);
+  }
+
+  /// Joystick channels of yaw and lateral motion, and their directions.
+  ///
+  /// The SDK documents [forward, rotation, left/right, head], but the L1W turns on channel 2
+  /// and strafes on channel 1, so that is the default; both stay configurable.
+  void setup_stick_axes()
+  {
+    auto yaw = declare_parameter<int>("stick_yaw_axis", 2);
+    auto lateral = declare_parameter<int>("stick_lateral_axis", 1);
+    const bool valid = (yaw == 1 && lateral == 2) || (yaw == 2 && lateral == 1);
+    if (!valid) {
+      RCLCPP_WARN(get_logger(),
+        "stick_yaw_axis / stick_lateral_axis must be 1 and 2 (got %d, %d), using 2 and 1",
+        yaw, lateral);
+      yaw = 2;
+      lateral = 1;
+    }
+    yaw_axis_ = static_cast<std::size_t>(yaw);
+    lateral_axis_ = static_cast<std::size_t>(lateral);
+    yaw_sign_ = declare_parameter<bool>("stick_invert_yaw", false) ? -1.0F : 1.0F;
+    lateral_sign_ = declare_parameter<bool>("stick_invert_lateral", false) ? -1.0F : 1.0F;
   }
 
   /// Create all state publishers.
@@ -285,14 +308,14 @@ private:
     if (!exec_->IsConnected() || !has_sdk_control()) {
       return;
     }
-    std::array<float, 4> joy{0.F, 0.F, 0.F, 0.F};  // [forward, yaw, lateral, head]
+    std::array<float, 4> joy{0.F, 0.F, 0.F, 0.F};  // [forward, see setup_stick_axes, head]
     {
       std::lock_guard<std::mutex> lk(cmd_mtx_);
       const double age = std::chrono::duration<double>(Clock::now() - last_cmd_time_).count();
       if (have_cmd_ && age < cmd_timeout_) {
         joy[0] = normalize(last_cmd_.linear.x, stick_vx_);
-        joy[1] = normalize(last_cmd_.angular.z, stick_wz_);
-        joy[2] = normalize(last_cmd_.linear.y, stick_vy_);
+        joy[yaw_axis_] = yaw_sign_ * normalize(last_cmd_.angular.z, stick_wz_);
+        joy[lateral_axis_] = lateral_sign_ * normalize(last_cmd_.linear.y, stick_vy_);
       }
     }
     exec_->SetRemote(joy, kNoButtons);
@@ -495,6 +518,10 @@ private:
   double stick_vx_{1.0};
   double stick_vy_{0.5};
   double stick_wz_{1.5};
+  std::size_t yaw_axis_{2};
+  std::size_t lateral_axis_{1};
+  float yaw_sign_{1.0F};
+  float lateral_sign_{1.0F};
   double cmd_timeout_{0.5};
   bool auto_control_right_{true};
   double control_retry_s_{1.0};
