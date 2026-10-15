@@ -1,11 +1,38 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
+import yaml
+
+
+def camera_node(context):
+    """
+    Start the RealSense node itself, respawned when it dies.
+
+    rs_launch.py starts it once: a camera that drops out at boot or on a USB hiccup stayed gone
+    until the next restart. The flat camera_config file becomes the node's parameters.
+    """
+    with open(LaunchConfiguration('camera_config').perform(context)) as f:
+        params = yaml.safe_load(f) or {}
+    namespace = str(params.pop('camera_namespace', 'camera'))
+    name = str(params.pop('camera_name', 'camera'))
+    return [
+        Node(
+            package='realsense2_camera',
+            executable='realsense2_camera_node',
+            namespace=namespace,
+            name=name,
+            parameters=[params],
+            respawn=True,
+            respawn_delay=3.0,
+            output='screen',
+            emulate_tty=True,
+        )
+    ]
 
 
 def generate_launch_description():
@@ -56,14 +83,7 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration('use_lidar')),
     )
 
-    # rs_launch.py warns about every launch argument it does not know (ours and any parent
-    # launch's), so it only gets config_file.
-    camera = GroupAction(
-        [IncludeLaunchDescription(PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [FindPackageShare('realsense2_camera'), 'launch', 'rs_launch.py'])))],
-        forwarding=False,
-        launch_configurations={'config_file': LaunchConfiguration('camera_config')},
-        condition=IfCondition(LaunchConfiguration('use_camera')),
-    )
+    camera = OpaqueFunction(
+        function=camera_node, condition=IfCondition(LaunchConfiguration('use_camera')))
 
     return LaunchDescription(args + [base, lidar, camera])

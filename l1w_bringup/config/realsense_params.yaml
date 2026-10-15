@@ -1,4 +1,5 @@
-# Flat key: value, read by realsense2_camera rs_launch.py (config_file); not a ros__parameters file.
+# Flat key: value (the rs_launch.py config_file format, not a ros__parameters file); bringup.launch.py
+# starts realsense2_camera_node with these as its parameters.
 # URDF stops at camera_link; the driver publishes stream/optical frames with factory extrinsics.
 camera_name: camera
 camera_namespace: camera
@@ -10,6 +11,6 @@ enable_gyro: false
 enable_accel: false
 rgb_camera.color_profile: 640,480,15      # tags and the handheld need no more; half the USB and CPU
 pointcloud.enable: false
-initial_reset: true
+initial_reset: false               # a reset at start can lose the camera on Jetson
 publish_tf: true
 tf_publish_rate: 0.0
