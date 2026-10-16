@@ -1,0 +1,115 @@
+name: ci
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: shellcheck -S warning script/*.sh
+      - name: flake8 (launch files, scripts)
+        run: |
+          pip install flake8 flake8-builtins flake8-comprehensions flake8-docstrings \
+            flake8-import-order flake8-quotes
+          # the settings of ament_flake8
+          flake8 --max-line-length 99 --import-order-style google \
+            --extend-ignore B902,C816,D100,D101,D102,D103,D104,D105,D106,D107,D203,D212,D404,I202 .
+      - name: XML, YAML and JSON parse
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libxml2-utils
+          xmllint --noout */package.xml l1w_description/urdf/*.xacro
+          python3 - <<'PY'
+          import json, pathlib, sys, yaml
+          bad = []
+          for p in pathlib.Path('.').rglob('*'):
+              if '.git' in p.parts or not p.is_file():
+                  continue
+              try:
+                  if p.suffix in ('.yaml', '.yml'):
+                      yaml.safe_load(p.read_text())
+                  elif p.suffix == '.json':
+                      json.loads(p.read_text())
+              except Exception as e:
+                  bad.append(f'{p}: {e}')
+          print('\n'.join(bad) or 'all YAML and JSON files parse')
+          sys.exit(1 if bad else 0)
+          PY
+
+  build-test:
+    name: build-test (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-22.04
+          - arch: aarch64       # the robot's Jetson
+            runner: ubuntu-22.04-arm
+    runs-on: ${{ matrix.runner }}
+    container: ros:humble-ros-base-jammy
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src/genisom_l1w_ros2
+      - name: zsibot SDK
+        run: src/genisom_l1w_ros2/script/setup.sh install
+      - name: Dependencies
+        run: |
+          apt-get update
+          rosdep update --rosdistro humble
+          # livox_ros_driver2 is built from source in the parent workspace, not a rosdep key
+          rosdep install --from-paths src --ignore-src -y --rosdistro humble \
+            --skip-keys livox_ros_driver2
+          apt-get install -y --no-install-recommends liburdfdom-tools
+      - name: Build
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --event-handlers console_cohesion+ \
+            --cmake-args -DCMAKE_BUILD_TYPE=Release
+      - name: Test (ament linters)
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon test --event-handlers console_cohesion+
+          colcon test-result --verbose
+      - name: URDF
+        run: |
+          source install/setup.bash
+          for args in "" "use_sensors:=false" "camera_stream_frames:=true prefix:=a_"; do
+            xacro src/genisom_l1w_ros2/l1w_description/urdf/l1w.urdf.xacro $args > /tmp/l1w.urdf
+            check_urdf /tmp/l1w.urdf > /dev/null && echo "URDF ok: ${args:-defaults}"
+          done
+      - name: Launch files
+        run: |
+          source install/setup.bash
+          ros2 launch l1w_bringup bringup.launch.py --show-args > /dev/null
+          ros2 launch l1w_driver l1w_driver.launch.py --show-args > /dev/null
+          ros2 launch l1w_description description.launch.py --show-args > /dev/null
+          ros2 launch l1w_description display.launch.py --show-args > /dev/null
+      - name: Driver starts
+        run: |
+          # Without a robot the SDK waits in the driver's constructor ("model is empty, please
+          # wait"): check that the node loads and reads its parameter file, then stop it.
+          source install/setup.bash
+          log=/tmp/l1w_driver.log
+          timeout -s KILL 10 install/l1w_driver/lib/l1w_driver/l1w_driver_node --ros-args \
+            --params-file install/l1w_driver/share/l1w_driver/config/l1w_driver.yaml \
+            -p robot_ip:=127.0.0.1 > "$log" 2>&1 || true
+          head -5 "$log"
+          if ! grep -q "cmd_vel -> joystick" "$log"; then
+            echo "::error title=Driver starts::$(head -c 2000 "$log" | tr '\n' ' ')"
+            exit 1
+          fi
