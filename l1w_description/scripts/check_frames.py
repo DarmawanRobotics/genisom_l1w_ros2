@@ -224,7 +224,11 @@ def plot_frames(T, frames, tris, title, out):
     ax3.set_zlabel('z')
     ax3.set_title('iso')
 
-    views = [('top (X fwd, Y left)', 0, 1), ('side (X fwd, Z up)', 0, 2), ('front (Y left, Z up)', 1, 2)]
+    views = [
+        ('top (X fwd, Y left)', 0, 1),
+        ('side (X fwd, Z up)', 0, 2),
+        ('front (Y left, Z up)', 1, 2),
+    ]
     for k, (view, i, j) in enumerate(views, start=2):
         ax = fig.add_subplot(2, 2, k)
         for name, t in tris:
@@ -255,7 +259,9 @@ def plot_frames(T, frames, tris, title, out):
 def main():
     """Parse args, compute FK, print the frame report and save the plot."""
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--model', default=None, help='URDF or xacro, default: l1w_description/urdf/l1w.urdf.xacro')
+    ap.add_argument(
+        '--model', default=None,
+        help='URDF or xacro, default: l1w_description/urdf/l1w.urdf.xacro')
     ap.add_argument('--mesh-dir', default=None, help='STL folder, overrides package:// lookup')
     ap.add_argument('--xacro-arg', action='append', default=[], help='e.g. use_camera_mesh:=false')
     ap.add_argument('--q', action='append', default=[], help='joint=rad, repeatable')
@@ -266,7 +272,8 @@ def main():
     model = args.model
     if model is None:
         from ament_index_python.packages import get_package_share_directory
-        model = os.path.join(get_package_share_directory('l1w_description'), 'urdf', 'l1w.urdf.xacro')
+        model = os.path.join(
+            get_package_share_directory('l1w_description'), 'urdf', 'l1w.urdf.xacro')
 
     q = {k: float(v) for k, v in (s.split('=') for s in args.q)}
     root = load_urdf(model, args.xacro_arg)

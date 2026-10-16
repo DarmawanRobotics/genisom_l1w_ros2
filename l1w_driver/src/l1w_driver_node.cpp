@@ -84,7 +84,8 @@ public:
     const auto fast_rate = declare_parameter<double>("fast_state_rate", 50.0);
     const auto slow_rate = declare_parameter<double>("slow_state_rate", 1.0);
 
-    joint_names_ = declare_parameter<std::vector<std::string>>("joint_names", default_joint_names());
+    joint_names_ =
+      declare_parameter<std::vector<std::string>>("joint_names", default_joint_names());
     if (joint_names_.size() != 16) {
       RCLCPP_WARN(get_logger(), "joint_names must have 16 entries, using defaults");
       joint_names_ = default_joint_names();
@@ -106,7 +107,8 @@ public:
     fast_timer_ = make_timer(fast_rate, [this] {publish_fast();});
     slow_timer_ = make_timer(slow_rate, [this] {publish_slow();});
 
-    RCLCPP_INFO(get_logger(), "l1w_driver -> %s:%d (recv :%d)", ip.c_str(),
+    RCLCPP_INFO(
+      get_logger(), "l1w_driver -> %s:%d (recv :%d)", ip.c_str(),
       static_cast<int>(send_port), static_cast<int>(recv_port));
   }
 
@@ -136,7 +138,8 @@ private:
     auto lateral = declare_parameter<int>("stick_lateral_axis", 1);
     const bool valid = (yaw == 1 && lateral == 2) || (yaw == 2 && lateral == 1);
     if (!valid) {
-      RCLCPP_WARN(get_logger(),
+      RCLCPP_WARN(
+        get_logger(),
         "stick_yaw_axis / stick_lateral_axis must be 1 and 2 (got %d, %d), using 2 and 1",
         static_cast<int>(yaw), static_cast<int>(lateral));
       yaw = 2;
@@ -147,7 +150,8 @@ private:
     yaw_sign_ = declare_parameter<bool>("stick_invert_yaw", false) ? -1.0F : 1.0F;
     lateral_sign_ = declare_parameter<bool>("stick_invert_lateral", false) ? -1.0F : 1.0F;
     // in the journal, so a robot running an older driver (no such line) is easy to spot
-    RCLCPP_INFO(get_logger(),
+    RCLCPP_INFO(
+      get_logger(),
       "cmd_vel -> joystick: forward on channel 0, yaw on %zu%s, lateral on %zu%s",
       yaw_axis_, yaw_sign_ < 0.0F ? " (inverted)" : "",
       lateral_axis_, lateral_sign_ < 0.0F ? " (inverted)" : "");
@@ -159,7 +163,8 @@ private:
     imu_pub_ = create_publisher<sensor_msgs::msg::Imu>("imu", 10);
     rpy_pub_ = create_publisher<geometry_msgs::msg::Vector3Stamped>("imu/rpy", 10);
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
-    world_vel_pub_ = create_publisher<geometry_msgs::msg::Vector3Stamped>("odom/world_velocity", 10);
+    world_vel_pub_ =
+      create_publisher<geometry_msgs::msg::Vector3Stamped>("odom/world_velocity", 10);
     joint_pub_ = create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
     motor_temp_pub_ = create_publisher<std_msgs::msg::Float32MultiArray>("motor_temperature", 10);
     battery_pub_ = create_publisher<sensor_msgs::msg::BatteryState>("battery", 10);
@@ -188,12 +193,13 @@ private:
     for (const auto & entry : command_map()) {
       const std::string name = entry.first;
       const bool is_estop = (name == "emergency_stop");
-      command_srvs_.push_back(create_service<Trigger>(
-        name,
-        [this, name](const std::shared_ptr<Trigger::Request>, std::shared_ptr<Trigger::Response> res) {
-          res->success = send_command(name, res->message);
-        },
-        rmw_qos_profile_services_default, is_estop ? estop_group_ : main_group_));
+      command_srvs_.push_back(
+        create_service<Trigger>(
+          name,
+          [this, name](const Trigger::Request::SharedPtr, Trigger::Response::SharedPtr res) {
+            res->success = send_command(name, res->message);
+          },
+          rmw_qos_profile_services_default, is_estop ? estop_group_ : main_group_));
     }
   }
 
@@ -234,14 +240,15 @@ private:
       return false;
     }
     const bool is_estop = (name == "emergency_stop");
-    const bool is_right = (name.size() > 14 && name.compare(name.size() - 14, 14, "_control_right") == 0);
+    const bool is_right =
+      (name.size() > 14 && name.compare(name.size() - 14, 14, "_control_right") == 0);
     if (is_estop) {
       std::lock_guard<std::mutex> lk(cmd_mtx_);
       have_cmd_ = false;
     }
     if (!is_estop && !is_right && !has_sdk_control()) {
-      res_msg = std::string("rejected: function_mode=") + function_mode_name(exec_->GetFunctionMode()) +
-        ", call sdk_control_right first";
+      res_msg = std::string("rejected: function_mode=") +
+        function_mode_name(exec_->GetFunctionMode()) + ", call sdk_control_right first";
       RCLCPP_WARN(get_logger(), "%s (%s)", res_msg.c_str(), name.c_str());
       return false;
     }
@@ -276,7 +283,8 @@ private:
       return;
     }
     if (!was_connected_) {
-      RCLCPP_INFO(get_logger(), "robot connected, function_mode=%s",
+      RCLCPP_INFO(
+        get_logger(), "robot connected, function_mode=%s",
         function_mode_name(exec_->GetFunctionMode()));
       was_connected_ = true;
     }
@@ -288,7 +296,8 @@ private:
       return;
     }
     if (control_confirmed_) {
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000,
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 5000,
         "control taken by %s, call sdk_control_right to take it back",
         function_mode_name(exec_->GetFunctionMode()));
       return;
@@ -301,7 +310,8 @@ private:
       exec_->SetCmd(zsibot::CmdCode::CMD_SDK_CONTROL_RIGHT);
       control_requested_ = true;
       last_right_req_ = Clock::now();
-      RCLCPP_INFO(get_logger(), "requesting SDK control right (function_mode=%s)",
+      RCLCPP_INFO(
+        get_logger(), "requesting SDK control right (function_mode=%s)",
         function_mode_name(exec_->GetFunctionMode()));
     }
   }

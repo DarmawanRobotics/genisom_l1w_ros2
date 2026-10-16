@@ -18,7 +18,8 @@ def generate_launch_description():
             'model',
             default_value=PathJoinSubstitution(
                 [FindPackageShare('l1w_description'), 'urdf', 'l1w.urdf.xacro'])),
-        DeclareLaunchArgument('xacro_args', default_value='', description='e.g. use_sensors:=false'),
+        DeclareLaunchArgument(
+            'xacro_args', default_value='', description='e.g. use_sensors:=false'),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         Node(
             package='robot_state_publisher',
